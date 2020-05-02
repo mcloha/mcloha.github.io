@@ -19,7 +19,7 @@ function preload() {
 
 function create() {
     cursors = this.input.keyboard.createCursorKeys();
-
+    console.log(cursors)
     this.add.image(400, 300, 'sky');
 
     scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
@@ -31,7 +31,7 @@ function create() {
     platforms.create(750, 220, 'ground');
 
     player = this.physics.add.sprite(100, 450, 'dude');
-    player.setBounce(0.2);
+    player.setBounce(0.4);
     player.setCollideWorldBounds(true);
 
     this.anims.create({
@@ -85,8 +85,8 @@ function update() {
         player.setVelocityX(0);
         player.anims.play('turn');
     }
-
-    if (cursors.up.isDown && player.body.touching.down) {
+    
+    if (cursors.space.isDown && player.body.touching.down) {
         console.log('first jump')
         player.setVelocityY(-330);
         jumping = true;
