@@ -18,7 +18,6 @@ function preload() {
 }
 
 function create() {
-    console.log(this)
     cursors = this.input.keyboard.createCursorKeys();
 
     this.add.image(400, 300, 'sky');
