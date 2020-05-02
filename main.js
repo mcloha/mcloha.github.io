@@ -1,12 +1,37 @@
 let platforms;
 let player;
 let cursor;
+let pointers;
 let starrs;
 let score = 0;
 let scoreText;
 let bombs;
+let joyStick;
+let cursorKeys;
+
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 800,
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    },
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 },
+            debug: false
+        }
+    }
+};
+
+const game = new Phaser.Game(config);
 
 function preload() {
+    this.load.plugin('rexvirtualjoystickplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js', true);
+
     this.load.image('sky', 'assets/sky.png');
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
@@ -19,7 +44,8 @@ function preload() {
 
 function create() {
     cursors = this.input.keyboard.createCursorKeys();
-    console.log(cursors)
+    pointers = this.input.activePointer;
+
     this.add.image(400, 300, 'sky');
 
     scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
@@ -70,28 +96,58 @@ function create() {
 
     this.physics.add.overlap(player, stars, collectStar, null, this);
     this.physics.add.overlap(player, bombs, hitBomb, null, this);
+
+    joyStick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
+        x: 350,
+        y: 680,
+        radius: 50,
+        base: this.add.circle(0, 0, 50, 0x888888),
+        thumb: this.add.circle(0, 0, 25, 0xcccccc),
+        // dir: 'up&down',   // 'up&down'|0|'left&right'|1|'4dir'|2|'8dir'|3
+    }).on('update', dumpJoyStickState, this);
+    cursorKeys = joyStick.createCursorKeys();
 }
 
 function update() {
     if (cursors.left.isDown) {
-        player.setVelocityX(-160);
-        player.anims.play('left', true);
+        moveLeft();
+    } else if (cursors.right.isDown) {
+        moveRight();
+    } else {
+        stay();
     }
-    else if (cursors.right.isDown) {
-        player.setVelocityX(160);
-        player.anims.play('right', true);
-    }
-    else {
-        player.setVelocityX(0);
-        player.anims.play('turn');
-    }
-    
-    if (cursors.space.isDown && player.body.touching.down) {
-        console.log('first jump')
-        player.setVelocityY(-330);
-        jumping = true;
+
+    if (cursors.space.isDown) {
+        jump();
     }
 }
+
+function moveLeft() {
+    player.setVelocityX(-160);
+    player.anims.play('left', true);
+}
+
+function moveRight() {
+    player.setVelocityX(160);
+    player.anims.play('right', true);
+}
+
+function stay() {
+    for (let name in cursorKeys) {
+        if (cursorKeys[name].isDown) {
+            return;
+        }
+    }
+    player.setVelocityX(0);
+    player.anims.play('turn');
+}
+
+function jump() {
+    if(player.body.touching.down) {
+        player.setVelocityY(-330);
+    }
+}
+
 
 function collectStar(player, star) {
     star.disableBody(true, true);
@@ -127,22 +183,22 @@ function createStars() {
     });
 }
 
-const config = {
-    type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    scene: {
-        preload: preload,
-        create: create,
-        update: update
-    },
-    physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 300 },
-            debug: false
+function dumpJoyStickState() {
+    for (let name in cursorKeys) {
+        if (cursorKeys[name].isDown) {
+            console.log(name)
+            switch(name) {
+                case 'left':
+                    moveLeft();
+                    break;
+                case 'right':
+                    moveRight();
+                    break;
+                case 'up': 
+                    jump();
+                    break;
+            }
         }
     }
-};
+}
 
-const game = new Phaser.Game(config);
